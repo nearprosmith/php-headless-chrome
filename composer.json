@@ -10,7 +10,7 @@
     ],
     "require": {
         "php": "^7.2",
-        "ext-json": "^7.2",
+        "ext-json": "*",
         "textalk/websocket": "^1.2"
     },
     "require-dev": {
