@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HeadlessChrome;
 
+use HeadlessChrome\DevToolsProtocolClient;
 use WebSocket\Client;
 
 class Page extends Endpoint
@@ -17,17 +18,17 @@ class Page extends Endpoint
     public function __construct($description, $devtoolsFrontendUrl, $id, $title, $type, $url, $webSocketDebuggerUrl)
     {
         parent::__construct($description, $devtoolsFrontendUrl, $id, $title, $type, $url, $webSocketDebuggerUrl);
-        $this->wsClient = new Client($webSocketDebuggerUrl);
-        $this->__send(1, 'Page.enable');
+        $this->wsClient = new DevToolsProtocolClient($webSocketDebuggerUrl);
+        $this->__send(1, \HeadlessChrome\DevToolsProtocol\Page::enable);
     }
 
     private function __send($id, $method, $params = []): void
     {
-        $this->wsClient->send(json_encode([
+        $this->wsClient->send([
             'id' => $id,
             'method' => $method,
             'params' => $params,
-        ]));
+        ]);
     }
 
     private function __waitFor(callable $forResponseFunc, callable $otherFunc = null): void
@@ -49,7 +50,9 @@ class Page extends Endpoint
 
     public function moveTo($url)
     {
-        $this->__send(10, 'Page.navigate', ['url' => $url]);
+        $this->__send(10, \HeadlessChrome\DevToolsProtocol\Page::navigate, \HeadlessChrome\DevToolsProtocol\Page::navigateRequest($url));
+
+
         $this->__waitFor(
             function ($id, $data): void {
                 if ($id === 10) {
@@ -57,7 +60,8 @@ class Page extends Endpoint
                 }
             },
             function ($data) {
-                if (isset($data->method) && $data->method === 'Page.frameStoppedLoading' && $data->params->frameId === $this->frameId) {
+                if (isset($data->method) && $data->method === \HeadlessChrome\DevToolsProtocol\Page::frameStoppedLoading &&
+                    $data->params->frameId === $this->frameId) {
                     $this->updateStatus();
                     return true;
                 }
@@ -68,7 +72,7 @@ class Page extends Endpoint
 
     public function captureTo(string $file_path)
     {
-        $this->__send(10, 'Page.captureScreenshot');
+        $this->__send(10, \HeadlessChrome\DevToolsProtocol\Page::captureScreenshot);
         $this->__waitFor(function ($id, $data) use ($file_path) {
             if ($id === 10) {
                 file_put_contents($file_path, base64_decode($data->result->data));
