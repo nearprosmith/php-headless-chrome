@@ -137,7 +137,7 @@ class Page extends Endpoint
 
     private function updateRootNode(): void
     {
-        $this->__send(50, DOM::getDocument, DOM::getDocumentRequest());
+        $this->__send(50, DOM::getDocument, DOM::getDocumentRequest(0));
         $this->__waitFor(
             function ($id, $data) {
                 if ($id === 50) {
