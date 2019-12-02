@@ -27,6 +27,6 @@ class Input extends DevToolsProtocol
 
     public static function dispatchKeyEventRequest(string $type, int $modifiers = null, float $timestamp = null, string $text = null, string $unmodifiedText = null, string $keyIdentifier = null, string $code = null, string $key = null, int $windowsVirtualKeyCode = null, int $nativeVirtualKeyCode = null, bool $autoRepeat = null, bool $isKeypad = null, bool $isSystemKey = null, int $location = null)
     {
-        return DevToolsProtocol::buildRequest(compact('type','modifiers','timestamp','text','unmodifiedText','keyIdentifier','code','key','windowsVirtualKeyCode','nativeVirtualKeyCode','autoRepeat','isKeypad','isSystemKey','location'));
+        return DevToolsProtocol::buildRequest(compact('type', 'modifiers', 'timestamp', 'text', 'unmodifiedText', 'keyIdentifier', 'code', 'key', 'windowsVirtualKeyCode', 'nativeVirtualKeyCode', 'autoRepeat', 'isKeypad', 'isSystemKey', 'location'));
     }
 }

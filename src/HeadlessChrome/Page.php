@@ -6,8 +6,8 @@ namespace HeadlessChrome;
 
 use HeadlessChrome\DevToolsProtocol\DOM;
 use HeadlessChrome\DevToolsProtocol\Input;
-use HeadlessChrome\DevToolsProtocol\Network;
 use HeadlessChrome\DevToolsProtocol\Page as PrtPage;
+use HeadlessChrome\DevToolsProtocol\Runtime;
 
 class Page extends Endpoint
 {
@@ -17,12 +17,13 @@ class Page extends Endpoint
 
     protected $rootNode;
 
+    protected $counter = 1;
+
     public function __construct($description, $devtoolsFrontendUrl, $id, $title, $type, $url, $webSocketDebuggerUrl)
     {
         parent::__construct($description, $devtoolsFrontendUrl, $id, $title, $type, $url, $webSocketDebuggerUrl);
         $this->wsClient = new DevToolsProtocolClient($webSocketDebuggerUrl);
         $this->__send(1, PrtPage::enable);
-        $this->__send(2,Network::enable);
     }
 
     private function __send($id, $method, $params = []): void
@@ -38,7 +39,7 @@ class Page extends Endpoint
     {
         while ($data = json_decode($this->wsClient->receive())) {
             if (isset($data->id)) {
-                if(is_callable($forResponseFunc)){
+                if (is_callable($forResponseFunc)) {
                     if ($forResponseFunc($data->id, $data) === true) {
                         return;
                     }
@@ -55,11 +56,11 @@ class Page extends Endpoint
 
     public function moveTo($url)
     {
-        $this->__send(10, PrtPage::navigate, PrtPage::navigateRequest($url));
-
+        $randId = mt_rand();
+        $this->__send($randId, PrtPage::navigate, PrtPage::navigateRequest($url));
         $this->__waitFor(
-            function ($id, $data): void {
-                if ($id === 10) {
+            function ($id, $data) use ($randId): void {
+                if ($id === $randId) {
                     $this->frameId = $data->result->frameId;
                 }
             },
@@ -71,6 +72,8 @@ class Page extends Endpoint
                 }
             }
         );
+
+        $this->frameId = null;
         return $this;
     }
 
@@ -91,14 +94,15 @@ class Page extends Endpoint
         if ($this->rootNode === null) {
             $this->updateRootNode();
         }
-        $this->__send(10, DOM::querySelector, DOM::querySelectorRequest($this->rootNode->nodeId, $selector));
+        $counter = 10;
+        $this->__send($counter, DOM::querySelector, DOM::querySelectorRequest($this->rootNode->nodeId, $selector));
         $this->__waitFor(
-            function ($id, $data) use ($value) {
-                if ($id === 10) {
-                    $this->__send(11, DOM::focus, DOM::focusRequest($data->result->nodeId));
-                } elseif ($id === 11) {
-                    $this->__send(12, Input::insertText, Input::insertTextRequest($value));
-                } elseif ($id === 12) {
+            function ($id, $data) use ($value,$counter) {
+                if ($id === $counter) {
+                    $this->__send($counter + 1, DOM::focus, DOM::focusRequest($data->result->nodeId));
+                } elseif ($id === $counter + 1) {
+                    $this->__send($counter + 2, Input::insertText, Input::insertTextRequest($value));
+                } elseif ($id === $counter + 2) {
                     return true;
                 }
             }
@@ -106,26 +110,13 @@ class Page extends Endpoint
         return $this;
     }
 
-    public function pressEnterOn(string $selector){
-        return $this->pressReturnOn($selector);
-    }
-
-    public function pressReturnOn(string $selector)
+    public function submit(string $formSelector)
     {
-        if ($this->rootNode === null) {
-            $this->updateRootNode();
-        }
-        $this->__send(10, DOM::querySelector, DOM::querySelectorRequest($this->rootNode->nodeId, $selector));
+        $expression = "document.querySelector('{$formSelector}').submit()";
+        $this->__send(10, Runtime::evaluate, Runtime::evaluateRequest($expression));
         $this->__waitFor(
             function ($id, $data) {
                 if ($id === 10) {
-                    $this->__send(11, DOM::focus, DOM::focusRequest($data->result->nodeId));
-                } elseif ($id === 11) {
-                    return true;
-//                    $this->__send(12, Input::dispatchKeyEvent, Input::dispatchKeyEventRequest('keyDown',0,null,null,null,null,'Enter','Enter',13,13,false,false,false));
-//                    $this->__send(13, Input::dispatchKeyEvent, Input::dispatchKeyEventRequest('char',0,null,'','',null,'Enter','Enter',13,13,false,false,false));
-//                    $this->__send(14, Input::dispatchKeyEvent, Input::dispatchKeyEventRequest('keyUp',0,null,null,null,null,'Enter','Enter',13,13,false,false,false));
-                } elseif ($id === 14) {
                     return true;
                 }
             }
@@ -135,20 +126,21 @@ class Page extends Endpoint
 
     public function waitForLoading(): void
     {
-        $this->__waitFor(null,function($data){
-            if (isset($data->method) && $data->method === Network::loadingFinished) {
-                print_r($data);
+        $this->__waitFor(null, function ($data) {
+            if (isset($data->method) && $data->method === PrtPage::frameStoppedLoading) {
                 return true;
             }
         });
+        $this->rootNode = null;
+        $this->updateStatus();
     }
 
     private function updateRootNode(): void
     {
-        $this->__send(10, DOM::getDocument, DOM::getDocumentRequest(0));
+        $this->__send(50, DOM::getDocument, DOM::getDocumentRequest());
         $this->__waitFor(
             function ($id, $data) {
-                if ($id === 10) {
+                if ($id === 50) {
                     $this->rootNode = $data->result->root;
                     return true;
                 }

@@ -12,5 +12,4 @@ class DevToolsProtocolClient extends Client
     {
         parent::send(json_encode($payload), $opcode, $masked);
     }
-
 }
