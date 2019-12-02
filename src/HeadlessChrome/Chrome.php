@@ -56,13 +56,15 @@ class Chrome
     public function updateEndpoints(): void
     {
         $start = microtime(true);
+
         do {
             $curlRes = `curl -s http://localhost:{$this->port}/json`;
 
             if ($curlRes !== null) {
                 $endpoints = json_decode($curlRes);
             }
-            if(microtime(true) - $start > 3){
+
+            if (microtime(true) - $start > 3) {
                 throw new \Exception('Failed to fetch endpoint json: timeout. Are');
             }
         } while (empty($endpoints));
