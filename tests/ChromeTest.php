@@ -30,4 +30,13 @@ class ChromeTest extends TestCase
         $this->assertEquals($page->title, 'Twitterにログイン');
         $this->assertEquals($page->url,'https://twitter.com/login');
     }
+
+    public function testToCapture(): void
+    {
+        $page = self::$chrome->getPage(0);
+        $page->moveTo('https://twitter.com/login');
+        $page->captureTo('./capture.png');
+        $this->assertFileExists('./capture.png');
+        unlink('./capture.png');
+    }
 }

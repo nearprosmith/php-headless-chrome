@@ -18,49 +18,77 @@ class Page extends Endpoint
     {
         parent::__construct($description, $devtoolsFrontendUrl, $id, $title, $type, $url, $webSocketDebuggerUrl);
         $this->wsClient = new Client($webSocketDebuggerUrl);
+        $this->__send(1, 'Page.enable');
+    }
+
+    private function __send($id, $method, $params = []): void
+    {
         $this->wsClient->send(json_encode([
-            'id' => 1,
-            "method" => 'Page.enable',
+            'id' => $id,
+            'method' => $method,
+            'params' => $params,
         ]));
+    }
+
+    private function __waitFor(callable $forResponseFunc, callable $otherFunc = null): void
+    {
+        while ($data = json_decode($this->wsClient->receive())) {
+            if (isset($data->id)) {
+                if ($forResponseFunc($data->id, $data) === true) {
+                    return;
+                }
+            } else {
+                if (is_callable($otherFunc)) {
+                    if ($otherFunc($data) === true) {
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     public function moveTo($url)
     {
-        $this->wsClient->send(json_encode([
-            'id' => 10,
-            "method" => 'Page.navigate',
-            "params" => ['url' => $url]
-        ]));
-        try {
-            while ($data = json_decode($this->wsClient->receive())) {
-                if (isset($data->id) && $data->id === 10) {
+        $this->__send(10, 'Page.navigate', ['url' => $url]);
+        $this->__waitFor(
+            function ($id, $data): void {
+                if ($id === 10) {
                     $this->frameId = $data->result->frameId;
                 }
-                if (isset($data->method) && $data->method == 'Page.frameStoppedLoading' && $data->params->frameId === $this->frameId) {
-
+            },
+            function ($data) {
+                if (isset($data->method) && $data->method === 'Page.frameStoppedLoading' && $data->params->frameId === $this->frameId) {
                     $this->updateStatus();
-
-                    return $this;
+                    return true;
                 }
             }
-        } catch (\WebSocket\ConnectionException $e) {
-        }
+        );
+        return $this;
     }
+
+    public function captureTo(string $file_path)
+    {
+        $this->__send(10, 'Page.captureScreenshot');
+        $this->__waitFor(function ($id, $data) use ($file_path) {
+            if ($id === 10) {
+                file_put_contents($file_path, base64_decode($data->result->data));
+                return true;
+            }
+        });
+        return $this;
+    }
+
     private function updateStatus(): void
     {
-        $this->wsClient->send(json_encode([
-            'id' => 10,
-            'method' => 'Page.getNavigationHistory'
-        ]));
-        try {
-            while ($data = json_decode($this->wsClient->receive())) {
-                if (isset($data->id) && $data->id === 10) {
+        $this->__send(10, 'Page.getNavigationHistory');
+        $this->__waitFor(
+            function($id,$data){
+                if($id === 10){
                     $this->title = $data->result->entries[$data->result->currentIndex]->title;
                     $this->url = $data->result->entries[$data->result->currentIndex]->url;
-                    return;
+                    return true;
                 }
             }
-        } catch (\WebSocket\ConnectionException $e) {
-        }
+        );
     }
 }
