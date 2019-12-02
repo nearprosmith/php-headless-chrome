@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
 
 namespace HeadlessChrome\DevToolsProtocol;
 
-
 class DevToolsProtocol
 {
-    static final public function buildRequest(array $args){
+    final public static function buildRequest(array $args)
+    {
         $request = [];
-        foreach($args as $key => $value){
-            if($value !== null){
+
+        foreach ($args as $key => $value) {
+            if ($value !== null) {
                 $request[$key] = $value;
             }
         }

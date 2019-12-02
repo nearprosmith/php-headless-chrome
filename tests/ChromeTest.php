@@ -49,5 +49,17 @@ class ChromeTest extends TestCase
         $page->moveTo('https://google.com');
         $page->captureTo('./capture2.jpg',Page::CAPTURE_TYPE_JPEG,80);
         $this->assertFileExists('./capture2.jpg');
+        unlink('./capture2.jpg');
+    }
+    public function testToLoginTwitter(): void
+    {
+        $page = self::$chrome->getPage(0);
+        $page->moveTo('https://twitter.com/login');
+        $page->type('form.signin input[name="session[username_or_email]"]','username');
+        $page->type('form.signin input[name="session[password]"]','password');
+        $page->pressReturnOn('button[type=submit]');
+        $page->waitForLoading();
+        $page->captureTo('./capture3.png');
+        $this->assertFileExists('./capture3.png');
     }
 }
