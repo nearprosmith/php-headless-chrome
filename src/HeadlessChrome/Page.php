@@ -13,7 +13,6 @@ class Page extends Endpoint
 
     protected $frameId;
 
-    protected $counter = 1;
 
     public function __construct($description, $devtoolsFrontendUrl, $id, $title, $type, $url, $webSocketDebuggerUrl)
     {
@@ -70,9 +69,9 @@ class Page extends Endpoint
         return $this;
     }
 
-    public function captureTo(string $file_path)
+    public function captureTo(string $file_path, string $format = 'png', int $quality = null, array $clip = null)
     {
-        $this->__send(10, \HeadlessChrome\DevToolsProtocol\Page::captureScreenshot);
+        $this->__send(10, \HeadlessChrome\DevToolsProtocol\Page::captureScreenshot, \HeadlessChrome\DevToolsProtocol\Page::captureScreenshotRequest($format,$quality,$clip));
         $this->__waitFor(function ($id, $data) use ($file_path) {
             if ($id === 10) {
                 file_put_contents($file_path, base64_decode($data->result->data));

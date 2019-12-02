@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace HeadlessChrome\Tests;
 
 use HeadlessChrome\Chrome;
+use HeadlessChrome\DevToolsProtocol\Page;
 use PHPUnit\Framework\TestCase;
 
 class ChromeTest extends TestCase
 {
+    /**
+     * @var Chrome $chrome
+     */
     static $chrome;
 
     public static function setUpBeforeClass(): void
@@ -38,5 +42,12 @@ class ChromeTest extends TestCase
         $page->captureTo('./capture.png');
         $this->assertFileExists('./capture.png');
         unlink('./capture.png');
+    }
+    public function testToOptionalCapture(): void
+    {
+        $page = self::$chrome->getPage(0);
+        $page->moveTo('https://google.com');
+        $page->captureTo('./capture2.jpg',Page::CAPTURE_TYPE_JPEG,80);
+        $this->assertFileExists('./capture2.jpg');
     }
 }

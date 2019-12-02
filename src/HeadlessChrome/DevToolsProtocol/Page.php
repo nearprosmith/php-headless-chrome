@@ -6,6 +6,9 @@ namespace HeadlessChrome\DevToolsProtocol;
 
 class Page extends DevToolsProtocol
 {
+    const CAPTURE_TYPE_PNG = 'png';
+    const CAPTURE_TYPE_JPEG = 'jpeg';
+
     const navigate = 'Page.navigate';
     const enable = 'Page.enable';
     const captureScreenshot = 'Page.captureScreenshot';
