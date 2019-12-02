@@ -1,0 +1,25 @@
+{
+    "name": "nearprosmith/php-headless-chrome",
+    "description": "Library for headless chrome",
+    "type": "library",
+    "authors": [
+        {
+            "name": "nearprosmith",
+            "email": "nearprosmith@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4",
+        "ext-json": "^7.4",
+        "textalk/websocket": "^1.2"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.16",
+        "phpunit/phpunit": "^8.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "HeadlessChrome\\": "src/HeadlessChrome/"
+        }
+    }
+}
